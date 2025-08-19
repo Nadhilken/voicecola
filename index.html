@@ -159,13 +159,9 @@
         // Send transcribed or typed text to ChatGPT API
         async function sendToChatGPT(text) {
             // WARNING: Storing API keys client-side is INSECURE. Use a server-side endpoint in production.
-            // Replace with a valid API key from https://platform.openai.com/account/api-keys
-            // The previous key caused a 401 error (invalid). Generate a new one.
-            const apiKey = 'YOUR_OPENAI_API_KEY';
+            // The provided API key caused a 401 error (invalid). Generate a new one at https://platform.openai.com/account/api-keys
+            const apiKey = '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';
             try {
-                if (apiKey === 'YOUR_OPENAI_API_KEY') {
-                    throw new Error('Invalid API key: Please replace with a valid OpenAI API key.');
-                }
                 responseDiv.textContent = 'Processing...';
                 const response = await fetch('https://api.openai.com/v1/chat/completions', {
                     method: 'POST',
