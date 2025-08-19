@@ -36,6 +36,8 @@
         #status {
             margin-top: 10px;
             color: #555;
+            max-width: 300px;
+            text-align: center;
         }
     </style>
 </head>
@@ -58,7 +60,7 @@
         async function checkMicPermission() {
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                stream.getTracks().forEach(track => track.stop()); // Stop the stream after checking
+                stream.getTracks().forEach(track => track.stop());
                 return true;
             } catch (error) {
                 statusDiv.textContent = 'Microphone access denied or unavailable.';
@@ -73,12 +75,12 @@
             if (!SpeechRecognition) {
                 responseDiv.textContent = 'Speech recognition not supported in this browser.';
                 speakResponse('Speech recognition not supported in this browser.');
-                micIcon.style.pointerEvents = 'none'; // Disable mic icon
+                micIcon.style.pointerEvents = 'none';
                 return false;
             }
 
             recognition = new SpeechRecognition();
-            recognition.continuous = false; // Firefox doesn't support continuous well
+            recognition.continuous = false;
             recognition.interimResults = false;
             recognition.lang = 'en-US';
 
@@ -121,7 +123,7 @@
 
         // Send transcribed text to ChatGPT API
         async function sendToChatGPT(text) {
-            // Warning: Storing API keys client-side is insecure. Use a server-side solution in production.
+            // WARNING: Storing API keys client-side is INSECURE. Use a server-side endpoint in production.
             const apiKey = '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';
             try {
                 responseDiv.textContent = 'Processing...';
@@ -142,7 +144,11 @@
                 });
 
                 if (!response.ok) {
-                    throw new Error('API request failed: ' + response.statusText);
+                    const errorData = await response.json().catch(() => ({}));
+                    const errorMessage = errorData.error?.message || response.statusText;
+                    const statusCode = response.status;
+                    console.error(`API Error: Status ${statusCode} - ${errorMessage}`);
+                    throw new Error(`API request failed: ${errorMessage} (Status: ${statusCode})`);
                 }
 
                 const data = await response.json();
@@ -150,8 +156,10 @@
                 responseDiv.textContent = chatResponse;
                 speakResponse(chatResponse);
             } catch (error) {
-                responseDiv.textContent = 'Error: ' + error.message;
-                speakResponse('Error: ' + error.message);
+                console.error('API Request Error:', error);
+                responseDiv.textContent = error.message || 'Error: Unable to connect to API.';
+                speakResponse(error.message || 'Error: Unable to connect to API.');
+                statusDiv.textContent = 'Check console for detailed error.';
             }
         }
 
