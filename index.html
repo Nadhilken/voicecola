@@ -64,7 +64,7 @@
             };
 
             recognition.onend = function() {
-                if (isRecording) {
+                if (isRecording && !window.speechSynthesis.speaking) {
                     recognition.start();
                 }
             };
@@ -78,7 +78,7 @@
             if (!recognition) return;
 
             isRecording = !isRecording;
-            if (isRecording) {
+            if (isRecording && !window.speechSynthesis.speaking) {
                 micIcon.classList.add('recording');
                 responseDiv.textContent = 'Listening...';
                 recognition.start();
@@ -91,8 +91,20 @@
 
         // Speak the response using Web Speech Synthesis
         function speakResponse(text) {
+            if (isRecording) {
+                recognition.stop();
+                isRecording = false;
+                micIcon.classList.remove('recording');
+            }
             const utterance = new SpeechSynthesisUtterance(text);
             utterance.lang = 'en-US';
+            utterance.onend = function() {
+                if (isRecording && !window.speechSynthesis.speaking) {
+                    recognition.start();
+                    micIcon.classList.add('recording');
+                    responseDiv.textContent = 'Listening...';
+                }
+            };
             window.speechSynthesis.speak(utterance);
         }
 
