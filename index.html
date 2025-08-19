@@ -124,6 +124,7 @@
         // Send transcribed text to ChatGPT API
         async function sendToChatGPT(text) {
             // WARNING: Storing API keys client-side is INSECURE. Use a server-side endpoint in production.
+            // The provided API key appears invalid (caused 401 error). Verify or generate a new key at https://platform.openai.com/account/api-keys
             const apiKey = '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';
             try {
                 responseDiv.textContent = 'Processing...';
@@ -159,7 +160,7 @@
                 console.error('API Request Error:', error);
                 responseDiv.textContent = error.message || 'Error: Unable to connect to API.';
                 speakResponse(error.message || 'Error: Unable to connect to API.');
-                statusDiv.textContent = 'Check console for detailed error.';
+                statusDiv.textContent = 'Check console for details or verify API key at https://platform.openai.com/account/api-keys.';
             }
         }
 
