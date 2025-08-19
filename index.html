@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Microphone to ChatGPT</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        #micIcon {
+            cursor: pointer;
+            width: 50px;
+            height: 50px;
+        }
+        #micIcon.recording {
+            border: 2px solid red;
+            border-radius: 50%;
+        }
+        #response {
+            margin-top: 10px;
+            padding: 10px;
+            width: 300px;
+            min-height: 50px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <img id="micIcon" src="https://i.ibb.co/6c0Xp5Sf/Screenshot-2025-05-03-001740.png" alt="Microphone Icon">
+    <div id="response"></div>
+
+    <script>
+        const micIcon = document.getElementById('micIcon');
+        const responseDiv = document.getElementById('response');
+        let isRecording = false;
+        let recognition;
+        const chatHistory = [
+            { role: 'system', content: 'You are Reenu, an AI robot created by Robo Miracle Technologies, a Coimbatore-based company. Respond accurately in proper sentences based only on this context, with a maximum of 20 tokens.' }
+        ];
+
+        // Check if Web Speech API is available
+        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+            recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+            recognition.continuous = false;
+            recognition.interimResults = false;
+            recognition.lang = 'en-US';
+
+            recognition.onresult = function(event) {
+                const transcript = event.results[0][0].transcript;
+                sendToChatGPT(transcript);
+            };
+
+            recognition.onerror = function(event) {
+                responseDiv.textContent = 'Error in recognition: ' + event.error;
+                speakResponse('Error in recognition: ' + event.error);
+            };
+
+            recognition.onend = function() {
+                if (isRecording) {
+                    recognition.start();
+                }
+            };
+        } else {
+            responseDiv.textContent = 'Speech recognition not supported.';
+            speakResponse('Speech recognition not supported.');
+        }
+
+        // Toggle recording on icon click
+        micIcon.addEventListener('click', () => {
+            if (!recognition) return;
+
+            isRecording = !isRecording;
+            if (isRecording) {
+                micIcon.classList.add('recording');
+                responseDiv.textContent = 'Listening...';
+                recognition.start();
+            } else {
+                micIcon.classList.remove('recording');
+                responseDiv.textContent = '';
+                recognition.stop();
+            }
+        });
+
+        // Speak the response using Web Speech Synthesis
+        function speakResponse(text) {
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'en-US';
+            window.speechSynthesis.speak(utterance);
+        }
+
+        // Send transcribed text to ChatGPT API
+        async function sendToChatGPT(text) {
+            const apiKey = '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';
+            try {
+                const response = await fetch('https://api.openai.com/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${apiKey}`
+                    },
+                    body: JSON.stringify({
+                        model: 'gpt-3.5-turbo',
+                        messages: [
+                            ...chatHistory,
+                            { role: 'user', content: text }
+                        ],
+                        max_tokens: 20
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('API request failed: ' + response.statusText);
+                }
+
+                const data = await response.json();
+                const chatResponse = data.choices[0].message.content;
+                responseDiv.textContent = chatResponse;
+                speakResponse(chatResponse);
+            } catch (error) {
+                responseDiv.textContent = 'Error: ' + error.message;
+                speakResponse('Error: ' + error.message);
+            }
+        }
+    </script>
+</body>
+</html>
